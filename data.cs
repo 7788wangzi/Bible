@@ -38,6 +38,71 @@ namespace Bible
             }            
         }
 
+
+        public void WriteIndexXML()
+        {
+
+            string _file = @"..\..\index.xml";
+            int curIndex = 0;
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.Load(_file);
+            XmlElement root = xDoc.DocumentElement;
+            
+            DataTable dt = resultSet.Tables[0];
+                int totalRows = dt.Rows.Count;
+                for (int i = 0; i < totalRows - 1; i++)
+                {
+                    string index = dt.Rows[i][0].ToString().Trim();
+                    string abbr = dt.Rows[i][1].ToString();
+                    string name = dt.Rows[i][2].ToString();
+                    string type = dt.Rows[i][3].ToString();
+
+                    int num = Int32.Parse(dt.Rows[i][4].ToString());
+
+                    XmlElement _elemenet = xDoc.CreateElement("book");
+                    XmlAttribute _atbID = xDoc.CreateAttribute("id");
+                    _atbID.Value = index;
+                    _elemenet.Attributes.Append(_atbID);
+
+                    XmlAttribute _atbGroup = xDoc.CreateAttribute("group");
+                    _atbGroup.Value = type;
+                    _elemenet.Attributes.Append(_atbGroup);
+
+                    XmlAttribute _atbName = xDoc.CreateAttribute("name");
+                    _atbName.Value = name;
+                    _elemenet.Attributes.Append(_atbName);
+
+                    XmlAttribute _atbChps = xDoc.CreateAttribute("chps");
+                    _atbChps.Value = num.ToString();
+                    _elemenet.Attributes.Append(_atbChps);
+
+                    // chps
+                    for (int j = 1; j <= num; j++)
+                    {
+                        curIndex++;
+                        XmlElement _chpElement = xDoc.CreateElement("chapter");
+
+                        // attributes
+                        XmlAttribute _atbIndex = xDoc.CreateAttribute("id");
+                        _atbIndex.Value = j.ToString();
+                        _chpElement.Attributes.Append(_atbIndex);
+
+                        string displayname = string.Format(@"{0}第{1}章", name, j);
+                        XmlAttribute _atbDisplayName = xDoc.CreateAttribute("name");
+                        _atbDisplayName.Value = displayname;
+                        _chpElement.Attributes.Append(_atbDisplayName);
+
+                        //value
+                        _chpElement.InnerText = curIndex.ToString();
+                        _elemenet.AppendChild(_chpElement);
+                    }
+
+                    root.AppendChild(_elemenet);
+                }
+
+                xDoc.Save(_file);
+        }
+
         public void WriteXML()
         {
             int curIndex = 0;
