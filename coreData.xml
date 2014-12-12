@@ -1,11 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Bible>
-  <Settings>
-    <setEach>2</setEach>
-    <currentIndex>4</currentIndex>
-    <total>1189</total>
-    <allPass>0</allPass>
-  </Settings>
   <Contents>
     <book index="1">
       <displayName>创世记第1章</displayName>
@@ -7305,8 +7299,7 @@
       <displayName>使徒行传第25章</displayName>
       <bookName>使徒行传</bookName>
       <chapter>25</chapter>
-      <abbreviation>徒</abbreviation>
-      <type>新约</type>
+      <abbreviation>徒</abbreviation><type>新约</type>
     </book>
     <book index="1044">
       <displayName>使徒行传第26章</displayName>

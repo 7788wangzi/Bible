@@ -1,184 +1,62 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Data;
-using System.Data.OleDb;
+using Windows.Data.Xml.Dom;
+using Windows.Storage;
+using Windows.Storage.Streams;
 
-namespace Bible
+namespace BibleProcess
 {
     public class data
     {
-#if DEBUG
-        const string xml = @"..\..\coreData.xml";
-#else
-        const string xml =@"coreData.xml";
-#endif
-        const string excel = @"D:\Projects\Windows Phone\temp\Bible\Bible\Book1.xlsx";
+        string localFileName = "BProcessSetting.xml";
+        string dataFile = @"ms-appx:///DataModel/coreData_EN.xml";
+        string localFileFullPath = string.Empty;
 
-        public string connectionString = string.Format(@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={0};Extended Properties='Excel 12.0;HDR=No;IMEX=1'", excel);
-        public DataSet resultSet = new DataSet();
-        public void GetData()
+        public data()
         {
-            string strCommandText = string.Format(@"select * from [{0}$]", "Sheet1");
-            OleDbDataAdapter oda = new OleDbDataAdapter(strCommandText, connectionString);
-            try
+            localFileFullPath = string.Format(@"ms-appdata:///local/{0}", localFileName);
+            if (App.SystemLanguage == 0)
             {
-                oda.Fill(resultSet);
+                dataFile = @"ms-appx:///DataModel/coreData.xml";
             }
-            catch
+            else if(App.SystemLanguage==1)
             {
-                resultSet = null;
-            }
-            finally
-            {
-                oda.Dispose();
-            }            
-        }
-
-
-        public void WriteIndexXML()
-        {
-
-            string _file = @"..\..\index.xml";
-            int curIndex = 0;
-            XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(_file);
-            XmlElement root = xDoc.DocumentElement;
-            
-            DataTable dt = resultSet.Tables[0];
-                int totalRows = dt.Rows.Count;
-                for (int i = 0; i < totalRows - 1; i++)
-                {
-                    string index = dt.Rows[i][0].ToString().Trim();
-                    string abbr = dt.Rows[i][1].ToString();
-                    string name = dt.Rows[i][2].ToString();
-                    string type = dt.Rows[i][3].ToString();
-
-                    int num = Int32.Parse(dt.Rows[i][4].ToString());
-
-                    XmlElement _elemenet = xDoc.CreateElement("book");
-                    XmlAttribute _atbID = xDoc.CreateAttribute("id");
-                    _atbID.Value = index;
-                    _elemenet.Attributes.Append(_atbID);
-
-                    XmlAttribute _atbGroup = xDoc.CreateAttribute("group");
-                    _atbGroup.Value = type;
-                    _elemenet.Attributes.Append(_atbGroup);
-
-                    XmlAttribute _atbName = xDoc.CreateAttribute("name");
-                    _atbName.Value = name;
-                    _elemenet.Attributes.Append(_atbName);
-
-                    XmlAttribute _atbChps = xDoc.CreateAttribute("chps");
-                    _atbChps.Value = num.ToString();
-                    _elemenet.Attributes.Append(_atbChps);
-
-                    // chps
-                    for (int j = 1; j <= num; j++)
-                    {
-                        curIndex++;
-                        XmlElement _chpElement = xDoc.CreateElement("chapter");
-
-                        // attributes
-                        XmlAttribute _atbIndex = xDoc.CreateAttribute("id");
-                        _atbIndex.Value = j.ToString();
-                        _chpElement.Attributes.Append(_atbIndex);
-
-                        string displayname = string.Format(@"{0}第{1}章", name, j);
-                        XmlAttribute _atbDisplayName = xDoc.CreateAttribute("name");
-                        _atbDisplayName.Value = displayname;
-                        _chpElement.Attributes.Append(_atbDisplayName);
-
-                        //value
-                        _chpElement.InnerText = curIndex.ToString();
-                        _elemenet.AppendChild(_chpElement);
-                    }
-
-                    root.AppendChild(_elemenet);
-                }
-
-                xDoc.Save(_file);
-        }
-
-        public void WriteXML()
-        {
-            int curIndex = 0;
-            XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(xml);
-            XmlElement root = xDoc.DocumentElement;
-            XmlNodeList contents = root.GetElementsByTagName("Contents");
-            if (contents.Count >= 1)
-            {
-                DataTable dt = resultSet.Tables[0];
-                int totalRows = dt.Rows.Count;
-                for (int i = 0; i < totalRows-1;i++ )
-                {
-                    string abbr = dt.Rows[i][1].ToString();
-                    string name = dt.Rows[i][2].ToString();
-                    string type = dt.Rows[i][3].ToString();
-                    
-                    int num = Int32.Parse(dt.Rows[i][4].ToString());
-                    for (int j = 1; j <= num; j++)
-                    {
-                        curIndex++;
-                        string displayname = string.Format(@"{0}第{1}章",name,j);
-                        XmlElement newElement = xDoc.CreateElement("book");
-                        XmlAttribute xattri = xDoc.CreateAttribute("index");
-                        xattri.Value = curIndex.ToString();
-                        newElement.Attributes.Append(xattri);
-                        //XmlElement index = xDoc.CreateElement("index");
-                        //index.InnerText = curIndex.ToString();
-                        XmlElement display = xDoc.CreateElement("displayName");
-                        display.InnerText = displayname;
-                        XmlElement book = xDoc.CreateElement("bookName");
-                        book.InnerText = name;
-                        XmlElement chp = xDoc.CreateElement("chapter");
-                        chp.InnerText = j.ToString();
-                        XmlElement abbrE = xDoc.CreateElement("abbreviation");
-                        abbrE.InnerText = abbr;
-                        XmlElement typeE = xDoc.CreateElement("type");                        
-                        typeE.InnerText = type;
-                        //newElement.AppendChild(index);
-                        newElement.AppendChild(display);
-                        newElement.AppendChild(book);
-                        newElement.AppendChild(chp);
-                        newElement.AppendChild(abbrE);
-                        newElement.AppendChild(typeE);
-                        contents[0].AppendChild(newElement);
-                    }
-                }
-
-                xDoc.Save(xml);
+                dataFile = @"ms-appx:///DataModel/coreData_EN.xml";
             }
         }
 
-        public string GetResult()
+        public static int CurrentCHP { get; set; }
+
+        public async Task<int[]> GetTasksIndex()
         {
-            string result = string.Empty;
+            int[] result = new int[2];
+
+            Uri fileUrl = new Uri(localFileFullPath);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+
             XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(xml);
+            xDoc.LoadXml(sStream);
+
             XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
-            bool finished = false;
             if (settings.Count >= 1)
             {
-                int chpsPerTime = Int32.Parse(settings[0].ChildNodes[0].InnerText);
-                int currIndex = Int32.Parse(settings[0].ChildNodes[1].InnerText);
-                int total = Int32.Parse(settings[0].ChildNodes[2].InnerText);
+                int chpsPerTime = Int32.Parse(settings[0].SelectSingleNode("setEach").InnerText.Trim());
+                int currIndex = Int32.Parse(settings[0].SelectSingleNode("currentIndex").InnerText.Trim());
+                int total = Int32.Parse(settings[0].SelectSingleNode("total").InnerText.Trim());
                 if (total > 1189)
                     total = 1189;
-                int fromIndex =0;
-                int toIndex =0;
+                int fromIndex = 0;
+                int toIndex = 0;
                 if (currIndex == total)
                 {
                     fromIndex = 1;
                     toIndex = fromIndex + chpsPerTime - 1;
                     currIndex = toIndex;
-
-                    // finished for 1 time
-                    finished = true;
                 }
                 else
                 {
@@ -191,71 +69,308 @@ namespace Bible
                     else
                     {
                         toIndex = total;
-                        currIndex = toIndex;        
+                        currIndex = toIndex;
                     }
                 }
 
-                //save and get
-                XmlNodeList contents = xDoc.GetElementsByTagName("Contents");
-                if (contents.Count >= 1)
+                result[0] = fromIndex;
+                result[1] = toIndex;
+                CurrentCHP = toIndex;
+            }
+            return result;
+        }
+
+        // no longer used, used GetTasksIndex and GetDisplayNameByIndex
+        private async Task<string[]> GetTasksResult()
+        {
+            int[] _tasksIndex = await GetTasksIndex();
+            string from = await GetDisplayNameByIndex(_tasksIndex[0]);
+            string to = await GetDisplayNameByIndex(_tasksIndex[1]);
+
+            return new string[] { from, to };
+        }
+
+        public async Task<string> GetDisplayNameByIndex(int index)
+        {
+            string result = string.Empty;
+            Uri fileUrl = new Uri(dataFile);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.LoadXml(sStream);
+            if (index < 1)
+            {
+                return string.Empty;
+            }
+
+            XmlNodeList contents = xDoc.GetElementsByTagName("Contents");
+            if (contents.Count >= 1)
+            {
+                var _node = contents[0].SelectSingleNode(string.Format(@"//book[@index='{0}']", index));
+                result = _node.SelectSingleNode("displayName").InnerText.Trim();
+            }
+
+            return result;
+        }
+
+        // nolonger used, user GetMaliSetting
+        public async Task<int> GetChpsPerTime()
+        {
+            Uri fileUrl = new Uri(localFileFullPath);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.LoadXml(sStream);
+
+            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
+            int result = 0;
+            if (settings.Count >= 1)
+            {
+                result = Int32.Parse(settings[0].SelectSingleNode("setEach").InnerText.Trim());
+            }
+            return result;
+        }
+
+        // nolonger used, user GetMaliSetting
+        public async Task<int> GetallPass()
+        {
+            Uri fileUrl = new Uri(localFileFullPath);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.LoadXml(sStream);
+            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
+            int result = 0;
+            if (settings.Count >= 1)
+            {
+                result = Int32.Parse(settings[0].SelectSingleNode("allPass").InnerText.Trim());
+            }
+
+            return result;
+        }
+
+        // no longer used, used GetTasksIndex, then Index[0]-1 is the current index
+        private async Task<int> GetCurrentChpIndex()
+        {
+            Uri fileUrl = new Uri(localFileFullPath);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.LoadXml(sStream);
+            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
+            int result = 0;
+            if (settings.Count >= 1)
+            {
+                result = Int32.Parse(settings[0].SelectSingleNode("currentIndex").InnerText.Trim());
+            }
+
+            return result;
+        }
+
+        // no longer used, replaced by using GetCurrentChpIndex and GetDisplayNameByIndex
+        private async Task<string> GetCurrentChp()
+        {
+            Uri fileUrl = new Uri(localFileFullPath);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.LoadXml(sStream);
+            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
+            int result = 0;
+            if (settings.Count >= 1)
+            {
+                int currentIndex = Int32.Parse(settings[0].SelectSingleNode("currentIndex").InnerText.Trim());
+                result = currentIndex;
+            }
+
+            if (result == 0)
+                return string.Empty;
+            else
+            {
+                string currChpDisplay = await GetDisplayNameByIndex(result);
+                return currChpDisplay;
+            }
+        }
+
+        // nolonger used, user GetMaliSetting
+        private async Task<int> GetFontSize()
+        {
+            Uri fileUrl = new Uri(localFileFullPath);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.LoadXml(sStream);
+
+            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
+            int value = 0;
+            if (settings.Count >= 1)
+            {
+                value = int.Parse(settings[0].SelectSingleNode("fontSize").InnerText.Trim());
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// ChpsPerTime, allpass, FontSize, Toast, language
+        /// </summary>
+        public async Task<int[]> GetMaliSetting()
+        {
+            Uri fileUrl = new Uri(localFileFullPath);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+
+            int[] value = new int[] { 3, 0, 1, 0,0 };
+            XmlDocument xDoc = new XmlDocument();
+
+            xDoc.LoadXml(sStream);
+
+            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
+
+            if (settings.Count >= 1)
+            {
+                value[0] = int.Parse(settings[0].SelectSingleNode("setEach").InnerText.Trim());
+                value[1] = int.Parse(settings[0].SelectSingleNode("allPass").InnerText.Trim());
+                value[2] = int.Parse(settings[0].SelectSingleNode("fontSize").InnerText.Trim());
+                value[3] = int.Parse(settings[0].SelectSingleNode("toast").InnerText.Trim());
+                value[4] = int.Parse(settings[0].SelectSingleNode("language").InnerText.Trim());
+            }
+
+            return value;
+        }
+        /// <summary>
+        /// get chapter content
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<string> GetChpsContent(string xmlFile)
+        {
+            Uri fileUrl = new Uri(xmlFile);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+            string content = Converter.DoConversion(sStream);
+            return content;
+        }
+
+        public async Task<bool> SetChpsPerEachAndFontSize(int chpsPerEachValue, int fontSizeValue, int toastValue, int languageValue)
+        {
+            bool isSaved = false;
+            Uri fileUrl = new Uri(localFileFullPath);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.LoadXml(sStream);
+
+            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
+            string result = string.Empty;
+            if (settings.Count >= 1)
+            {
+                settings[0].SelectSingleNode("setEach").InnerText = chpsPerEachValue.ToString();
+                settings[0].SelectSingleNode("fontSize").InnerText = fontSizeValue.ToString();
+                settings[0].SelectSingleNode("toast").InnerText = toastValue.ToString();
+                settings[0].SelectSingleNode("language").InnerText = languageValue.ToString();
+                try
                 {
-                    XmlNode fromNode = contents[0].SelectSingleNode(string.Format(@"//book[@index='{0}']", fromIndex));
-                    string f1 = fromNode.ChildNodes[0].InnerText;
-                    XmlNode toNode = contents[0].SelectSingleNode(string.Format(@"//book[@index='{0}']", toIndex));
-                    string t1 = toNode.ChildNodes[0].InnerText;
-                    result = string.Format(@"from - {0}: to - {1}",f1,t1);
+                    await xDoc.SaveToFileAsync(sFile);
+                    isSaved = true;
                 }
-                settings[0].ChildNodes[1].InnerText = currIndex.ToString();
-                if (finished)
+                catch { }
+            }
+
+            return isSaved;
+        }
+
+        public async Task<bool> SetCurrentCHP(int value)
+        {
+            bool complete = false;
+            Uri fileUrl = new Uri(localFileFullPath);
+            StorageFile sFile = await StorageFile.GetFileFromApplicationUriAsync(fileUrl);
+            string sStream = await FileIO.ReadTextAsync(sFile);
+
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.LoadXml(sStream);
+
+            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
+            string result = string.Empty;
+            if (settings.Count >= 1)
+            {
+                if (value == 1189)
                 {
-                    int soFar = Int32.Parse(settings[0].ChildNodes[3].InnerText);
-                    soFar++;
-                    settings[0].ChildNodes[3].InnerText = soFar.ToString();
+                    int _allPass = Int32.Parse(settings[0].SelectSingleNode("allPass").InnerText.Trim());
+                    _allPass++;
+                    settings[0].SelectSingleNode("allPass").InnerText = _allPass.ToString();
                 }
-                xDoc.Save(xml);
+                settings[0].SelectSingleNode("currentIndex").InnerText = value.ToString();
+                await xDoc.SaveToFileAsync(sFile);
+                complete = true;
             }
-            return result;
+            return complete;
         }
 
-        public string GetChpsPerTime()
+        public async Task<bool> InitSetting()
         {
+            bool isSaved = false;
+            string originalSetting = @"ms-appx:///DataModel/Setting.xml";
+            Uri originalSettingURL = new Uri(originalSetting);
+            StorageFile originalSettingFile = await StorageFile.GetFileFromApplicationUriAsync(originalSettingURL);
+            string settingStream = await FileIO.ReadTextAsync(originalSettingFile);
+            // load content to XmlDocument
             XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(xml);
-            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
-            string result = string.Empty;
-            if (settings.Count >= 1)
+            xDoc.LoadXml(settingStream);
+           
+            StorageFile localFile = await ApplicationData.Current.LocalFolder.CreateFileAsync(localFileName,CreationCollisionOption.OpenIfExists);
+
+            try
             {
-                int chpsPerTime = Int32.Parse(settings[0].ChildNodes[0].InnerText);
-                result = chpsPerTime.ToString();
+                // replace the Setting.xml in local folder with the original version.
+                await xDoc.SaveToFileAsync(localFile);
+                isSaved = true;
             }
-            return result;
+            catch
+            {
+                isSaved = false;
+            }
+
+            return isSaved;
         }
 
-        public string GetallPass()
+        public async Task<bool> IsFileExist()
         {
-            XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(xml);
-            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
-            string result = string.Empty;
-            if (settings.Count >= 1)
+            StorageFile sFile = null;
+            bool fileExists = false;
+
+            try
             {
-                int chpsPerTime = Int32.Parse(settings[0].ChildNodes[3].InnerText);
-                result = chpsPerTime.ToString();
+                sFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(localFileFullPath));
+                fileExists = true;
             }
-            return result;
+            catch (FileNotFoundException ex)
+            {
+                fileExists = false;
+            }
+            return fileExists;
         }
 
-        public void SetChpsPerTime(int value)
+        public async Task<bool> CheckFileCompleteness()
         {
-            XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(xml);
-            XmlNodeList settings = xDoc.GetElementsByTagName("Settings");
-            string result = string.Empty;
-            if (settings.Count >= 1)
+            bool isFileCompleteness = false;
+            Uri localSettingURL = new Uri(localFileFullPath);
+            StorageFile localFile = await StorageFile.GetFileFromApplicationUriAsync(localSettingURL);
+
+            string sStream = await FileIO.ReadTextAsync(localFile);
+            if (sStream.Length > 220)
             {
-                settings[0].ChildNodes[0].InnerText = value.ToString();
-                xDoc.Save(xml);
+                isFileCompleteness = true;
             }
+
+            return isFileCompleteness;
         }
 
     }
