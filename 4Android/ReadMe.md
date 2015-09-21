@@ -52,7 +52,7 @@
 ![开始](https://github.com/7788wangzi/Bible/blob/master/4Android/Screen/04.png "对比阅读") 
 
 ###下载App:  
-1. 单击下载[链接](https://github.com/7788wangzi/Bible/blob/master/4Android/Bible_Andriod.Bible_Andriod-Signed.apk) 。  
-2. 在**Bible/4Android/Bible_Andriod.Bible_Andriod-Signed.apk**页面，单击**View Raw** 。  
-3. 浏览器将弹出保存文件"Bible_Andriod.Bible_Andriod-Signed.apk"的对话框，保存到本地。  
-4. 连接手机，将文件**Bible_Andriod.Bible_Andriod-Signed.apk** 拷贝到手机，并安装，安装后的应用为**中文圣经**。
+1. 单击下载[链接](https://github.com/7788wangzi/Bible/blob/master/4Android/bible.android.x092115.qijie-Signed.apk) 。  
+2. 在**Bible/4Android/bible.android.x092115.qijie-Signed.apk**页面，单击**View Raw** 。  
+3. 浏览器将弹出保存文件"bible.android.x092115.qijie-Signed.apk"的对话框，保存到本地。  
+4. 连接手机，将文件**bible.android.x092115.qijie-Signed.apk** 拷贝到手机，并安装，安装后的应用为**中文圣经**。
